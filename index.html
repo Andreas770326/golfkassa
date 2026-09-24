@@ -58,7 +58,8 @@
       font-size: 1.05rem;
     }
     .topbar-divider { width: 1px; height: 28px; background: rgba(255,255,255,.35); }
-    .product-name { font-size: .95rem; color: #e3eaf3; }
+    .product-home { border: 0; padding: 0; background: transparent; color: #e3eaf3; font-size: .95rem; font-weight: 700; }
+    .product-home:hover { color: white; }
     .topbar-nav { display: flex; gap: 8px; margin-left: auto; }
     .nav-btn { min-height: 40px; padding: 7px 12px; border: 1px solid rgba(255,255,255,.45); border-radius: var(--radius); background: transparent; color: white; font-weight: 700; }
     .nav-btn.active, .nav-btn:hover { background: white; color: var(--scania-blue); }
@@ -76,9 +77,6 @@
     h2 { font-size: 1.6rem; }
     h3 { font-size: 1.1rem; }
     .hero p { max-width: 700px; color: #d7e1ed; margin: 15px 0 0; font-size: 1.05rem; }
-    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
-    .hero-actions .btn-secondary { border-color: white; color: white; background: transparent; }
-    .hero-actions .btn-secondary:hover { background: white; color: var(--scania-blue); }
 
     main { padding: 32px 20px 70px; }
     .grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, .8fr); gap: 24px; align-items: start; }
@@ -154,6 +152,10 @@
     .results-banner p { margin: 6px 0 0; color: #d7e1ed; }
     .balance { text-align: right; }
     .balance strong { font-size: 1.65rem; display: block; }
+    .result-actions { display: flex; justify-content: flex-end; margin-top: 16px; }
+    .btn-share { background: white; color: var(--scania-blue); border-color: white; }
+    .btn-share:hover { background: #eef3f8; }
+    .btn-share:disabled { opacity: .55; cursor: not-allowed; transform: none; }
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; min-width: 540px; }
     th, td { padding: 14px 12px; border-bottom: 1px solid var(--line); text-align: left; }
@@ -170,7 +172,8 @@
     .empty { color: var(--muted); font-style: italic; }
     .view { display: none; }
     .view.active { display: block; }
-    .home-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+    .home-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+    .leaderboard-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
     .home-link { display: block; width: 100%; text-align: left; border: 1px solid var(--line); background: white; color: var(--ink); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); }
     .home-link:hover { border-color: var(--scania-blue-2); transform: translateY(-1px); }
     .home-link strong { display: block; font-size: 1.25rem; color: var(--scania-blue); }
@@ -178,9 +181,16 @@
     .history-total { background: var(--scania-blue); color: white; border-radius: var(--radius); padding: 22px 24px; margin-bottom: 16px; }
     .history-total strong { display: block; font-size: 1.8rem; }
     .history-actions { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 18px; }
+    .history-chart { margin: 0 0 28px; }
+    .chart-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: #fbfcfd; padding: 12px; }
+    .chart-scroll svg { display: block; width: 100%; min-width: 620px; height: auto; }
+    .chart-legend { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 12px; color: var(--muted); font-size: .86rem; }
+    .chart-legend-item { display: inline-flex; align-items: center; gap: 7px; }
+    .chart-legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
     .history-round { border-top: 1px solid var(--line); padding: 16px 0; }
     .history-round:first-child { border-top: 0; }
     .history-round header { display: flex; justify-content: space-between; gap: 16px; align-items: center; }
+    .history-round-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
     .history-round ul { margin: 10px 0 0; padding-left: 20px; color: var(--muted); }
     .delete-round { color: var(--danger); border-color: var(--danger); }
     .delete-round:hover { background: #fff2f0; }
@@ -202,9 +212,11 @@
       .results-banner { align-items: start; flex-direction: column; }
       .balance { text-align: left; }
       .actions .btn { width: 100%; }
-      .hero-actions .btn { width: 100%; }
       .home-grid { grid-template-columns: 1fr; }
+      .leaderboard-grid { grid-template-columns: 1fr; }
       .history-actions { align-items: stretch; flex-direction: column; }
+      .history-round header { align-items: stretch; flex-direction: column; }
+      .history-round-actions { justify-content: flex-start; }
     }
     @media (max-width: 600px) {
       .card { box-shadow: 0 4px 14px rgba(4, 30, 66, .07); }
@@ -223,11 +235,12 @@
 </head>
 <body>
   <header class="topbar" aria-label="Golfkassa produktfält">
-    <div class="product-name">Golfkassa</div>
+    <button class="product-home" type="button" data-view="home-view" aria-label="Gå till startsidan">Golfkassa</button>
     <nav class="topbar-nav" aria-label="Huvudnavigation">
       <button class="nav-btn active" type="button" data-view="home-view">Start</button>
       <button class="nav-btn" type="button" data-view="register-view">Registrera runda</button>
       <button class="nav-btn" type="button" data-view="history-view">Historik</button>
+      <button class="nav-btn" type="button" data-view="leaderboard-view">Topplista</button>
     </nav>
   </header>
 
@@ -236,10 +249,6 @@
       <div class="eyebrow">Beräkning av golfspel</div>
       <h1>Golfkassa</h1>
       <p>Beräkna insatserna för din golfrunda — vinnare på nio hål, totalpoäng, birdies och eagles.</p>
-      <div class="hero-actions">
-        <button class="btn btn-primary" type="button" data-view="register-view">Registrera runda</button>
-        <button class="btn btn-secondary" type="button" data-view="history-view">Visa historik</button>
-      </div>
     </div>
   </section>
 
@@ -252,6 +261,7 @@
         <div class="home-grid" style="margin-top:24px">
           <button class="home-link" type="button" data-view="register-view"><strong>Registrera runda</strong><span>Fyll i poäng, birdies och eagles och få en tydlig betalningssammanställning.</span></button>
           <button class="home-link" type="button" data-view="history-view"><strong>Historik</strong><span>Se ackumulerat resultat per spelare och tidigare registrerade rundor.</span></button>
+          <button class="home-link" type="button" data-view="leaderboard-view"><strong>Topplista</strong><span>Se vem som leder kampen om Birdiemaskinen och Eagleskungen.</span></button>
         </div>
       </div>
     </section>
@@ -296,7 +306,6 @@
           </div>
           <div class="actions" style="margin-top:24px">
             <button class="btn btn-secondary" type="button" id="add-player">+ Lägg till spelare</button>
-            <button class="btn btn-quiet" type="button" id="load-example">Ladda exempel</button>
           </div>
           <hr class="divider" />
           <div class="actions">
@@ -334,7 +343,6 @@
         </div>
         <div class="balance"><span class="pill pill-green">Balanserat</span><strong id="balance-total">0 kr</strong><span>totalt i omlopp</span></div>
       </div>
-
       <div class="card">
         <div class="section-label">Nettoresultat</div>
         <div class="table-wrap">
@@ -371,19 +379,22 @@
         <div id="history-content"></div>
       </div>
     </section>
+
+    <section id="leaderboard-view" class="view" aria-labelledby="leaderboard-title">
+      <div class="card">
+        <div class="section-label">Topplista</div>
+        <h2 id="leaderboard-title">Topplista</h2>
+        <p style="margin:7px 0 24px;color:var(--muted)">Ackumulerat resultat från alla registrerade rundor.</p>
+        <div id="leaderboard-content"></div>
+      </div>
+    </section>
   </main>
 
-  <footer>Golfkassa – prototyp</footer>
+  <footer>Golfkassa</footer>
 
   <script>
     const state = { players: 2 };
     const defaultStakes = { first: 50, last: 50, total: 50, birdie: 20, eagle: 50 };
-    const example = [
-      { name: 'Matte', first: 20, last: 15, total: 35, birdies: 1, eagles: 1 },
-      { name: 'Robban', first: 16, last: 17, total: 33, birdies: 0, eagles: 1 },
-      { name: 'Adde', first: 18, last: 11, total: 29, birdies: 0, eagles: 0 }
-    ];
-
     const playerGrid = document.getElementById('player-grid');
     const form = document.getElementById('golf-form');
     const errorSummary = document.getElementById('error-summary');
@@ -395,11 +406,12 @@
       catch (error) { return []; }
     }
 
-    function saveHistory(accounts) {
+    function saveHistory(accounts, players) {
       const history = loadHistory();
-      history.unshift({ date: new Date().toISOString(), players: accounts.map(a => ({ name: a.name, net: a.receive - a.pay })) });
+      history.unshift({ date: new Date().toISOString(), players: players.map((player, index) => ({ name: player.name, net: accounts[index].receive - accounts[index].pay, birdies: player.birdies, eagles: player.eagles })) });
       localStorage.setItem(historyKey, JSON.stringify(history.slice(0, 50)));
       renderHistory();
+      renderLeaderboard();
     }
 
     function renderHistory() {
@@ -411,9 +423,11 @@
       }
       const totals = {};
       history.forEach(round => round.players.forEach(player => {
-        if (!totals[player.name]) totals[player.name] = { net: 0, rounds: 0 };
+        if (!totals[player.name]) totals[player.name] = { net: 0, rounds: 0, birdies: 0, eagles: 0 };
         totals[player.name].net += Number(player.net) || 0;
         totals[player.name].rounds += 1;
+        totals[player.name].birdies += Number(player.birdies) || 0;
+        totals[player.name].eagles += Number(player.eagles) || 0;
       }));
       const rows = Object.entries(totals).sort((a, b) => b[1].net - a[1].net).map(([name, value]) => {
         const status = value.net > 0 ? 'vinst' : value.net < 0 ? 'förlust' : 'jämnt';
@@ -422,9 +436,88 @@
       const rounds = history.map((round, index) => {
         const date = new Date(round.date).toLocaleDateString('sv-SE');
         const players = round.players.map(player => `<li><strong>${escapeHtml(player.name)}</strong>: <span class="${player.net > 0 ? 'positive' : player.net < 0 ? 'negative' : 'zero'}">${money(player.net)}</span></li>`).join('');
-        return `<article class="history-round"><header><div><strong>${date}</strong><span class="pill pill-blue" style="margin-left:8px">${round.players.length} spelare</span></div><button class="btn btn-secondary delete-round" type="button" data-delete-round="${index}">Radera</button></header><ul>${players}</ul></article>`;
+        return `<article class="history-round"><header><div><strong>${date}</strong><span class="pill pill-blue" style="margin-left:8px">${round.players.length} spelare</span></div><div class="history-round-actions"><button class="btn btn-secondary share-round" type="button" data-share-round="${index}">Dela resultat</button><button class="btn btn-secondary delete-round" type="button" data-delete-round="${index}">Radera</button></div></header><ul>${players}</ul></article>`;
       }).join('');
-      content.innerHTML = `<div class="history-total"><span>Antal registrerade rundor</span><strong>${history.length}</strong></div><div class="section-label">Summering per namn</div><div class="table-wrap"><table><caption class="sr-only">Ackumulerat resultat per spelare</caption><thead><tr><th>Spelare</th><th>Rundor</th><th>Ackumulerat resultat</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div><div class="result-block"><div class="section-label">Tidigare rundor</div>${rounds}</div>`;
+      content.innerHTML = `<div class="history-total"><span>Antal registrerade rundor</span><strong>${history.length}</strong></div><div class="history-chart"><div class="section-label">Utveckling över tid</div><div id="history-chart"></div></div><div class="section-label">Summering per namn</div><div class="table-wrap"><table><caption class="sr-only">Ackumulerat resultat per spelare</caption><thead><tr><th>Spelare</th><th>Rundor</th><th>Ackumulerat resultat</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div><div class="result-block"><div class="section-label">Tidigare rundor</div>${rounds}</div>`;
+      renderHistoryChart(history);
+    }
+
+    function renderHistoryChart(history) {
+      const target = document.getElementById('history-chart');
+      if (!target) return;
+      const rounds = [...history].reverse();
+      const names = [...new Set(rounds.flatMap(round => round.players.map(player => player.name)))];
+      const colors = ['#0057b8', '#e4002b', '#087443', '#8a4b08'];
+      const series = names.map((name, index) => {
+        let runningTotal = 0;
+        const values = rounds.map(round => {
+          const player = round.players.find(item => item.name === name);
+          runningTotal += Number(player && player.net) || 0;
+          return runningTotal;
+        });
+        return { name, values, color: colors[index % colors.length] };
+      });
+      const width = 720;
+      const height = 350;
+      const left = 72;
+      const right = 24;
+      const top = 24;
+      const bottom = 68;
+      const plotWidth = width - left - right;
+      const plotHeight = height - top - bottom;
+      const allValues = series.flatMap(item => item.values).concat(0);
+      const minValue = Math.min(...allValues);
+      const maxValue = Math.max(...allValues);
+      const padding = minValue === maxValue ? 20 : Math.max(10, (maxValue - minValue) * .15);
+      const rawMinY = minValue - padding;
+      const rawMaxY = maxValue + padding;
+      const tickStep = Math.max(50, Math.ceil((rawMaxY - rawMinY) / 4 / 50) * 50);
+      const minY = Math.floor(rawMinY / tickStep) * tickStep;
+      const maxY = Math.ceil(rawMaxY / tickStep) * tickStep;
+      const x = index => rounds.length === 1 ? left + plotWidth / 2 : left + (index / (rounds.length - 1)) * plotWidth;
+      const y = value => top + ((maxY - value) / (maxY - minY)) * plotHeight;
+      const ticks = [];
+      for (let value = minY; value <= maxY; value += tickStep) ticks.push(value);
+      const grid = ticks.map(value => `<line x1="${left}" y1="${y(value).toFixed(1)}" x2="${width - right}" y2="${y(value).toFixed(1)}" stroke="${value === 0 ? '#8b9bad' : '#d4dce5'}" stroke-width="${value === 0 ? 1.5 : 1}"/><text x="${left - 10}" y="${(y(value) + 4).toFixed(1)}" text-anchor="end" fill="#52657a" font-size="12">${Math.round(value)} kr</text>`).join('');
+      const xLabels = rounds.map((round, index) => {
+        const date = new Date(round.date).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' });
+        return `<line x1="${x(index).toFixed(1)}" y1="${top}" x2="${x(index).toFixed(1)}" y2="${height - bottom}" stroke="#eef1f4" stroke-width="1"/><text x="${x(index).toFixed(1)}" y="${height - 38}" text-anchor="middle" fill="#52657a" font-size="12">Runda ${index + 1}</text><text x="${x(index).toFixed(1)}" y="${height - 20}" text-anchor="middle" fill="#52657a" font-size="11">${escapeHtml(date)}</text>`;
+      }).join('');
+      const lines = series.map(item => {
+        const points = item.values.map((value, index) => `${x(index).toFixed(1)},${y(value).toFixed(1)}`).join(' ');
+        const dots = item.values.map((value, index) => `<circle cx="${x(index).toFixed(1)}" cy="${y(value).toFixed(1)}" r="4" fill="white" stroke="${item.color}" stroke-width="2"><title>${escapeHtml(item.name)}: ${money(value)} efter runda ${index + 1}</title></circle>`).join('');
+        return `<polyline points="${points}" fill="none" stroke="${item.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${dots}`;
+      }).join('');
+      const legend = series.map(item => `<span class="chart-legend-item"><span class="chart-legend-dot" style="background:${item.color}"></span>${escapeHtml(item.name)}</span>`).join('');
+      target.innerHTML = `<div class="chart-scroll"><svg viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="history-chart-title history-chart-description"><title id="history-chart-title">Ackumulerat resultat över tid</title><desc id="history-chart-description">Linjediagram som visar varje spelares ackumulerade nettoresultat efter varje registrerad runda.</desc>${grid}${xLabels}${lines}</svg></div><div class="chart-legend" aria-label="Teckenförklaring">${legend}</div>`;
+    }
+
+    function renderLeaderboard() {
+      const history = loadHistory();
+      const content = document.getElementById('leaderboard-content');
+      if (!history.length) {
+        content.innerHTML = '<p class="empty">Ingen historik ännu. Registrera en runda för att fylla topplistan.</p>';
+        return;
+      }
+      const totals = {};
+      history.forEach(round => round.players.forEach(player => {
+        if (!totals[player.name]) totals[player.name] = { birdies: 0, eagles: 0 };
+        totals[player.name].birdies += Number(player.birdies) || 0;
+        totals[player.name].eagles += Number(player.eagles) || 0;
+      }));
+      const createRows = (metric, label) => {
+        const sorted = Object.entries(totals).sort((a, b) => b[1][metric] - a[1][metric] || b[1][metric === 'birdies' ? 'eagles' : 'birdies'] - a[1][metric === 'birdies' ? 'eagles' : 'birdies']);
+        let previousScore = null;
+        let previousRank = 0;
+        return sorted.map(([name, value], index) => {
+          const score = value[metric];
+          const rank = score === previousScore ? previousRank : index + 1;
+          previousScore = score;
+          previousRank = rank;
+          return `<tr><td data-label="Plats"><strong>${rank}</strong></td><td data-label="Spelare"><strong>${escapeHtml(name)}</strong></td><td data-label="${label}" class="amount">${score}</td></tr>`;
+        }).join('');
+      };
+      content.innerHTML = `<div class="leaderboard-grid"><section class="result-block"><div class="section-label">Birdiemaskinen</div><div class="table-wrap"><table><caption class="sr-only">Ranking efter antal birdies</caption><thead><tr><th>Plats</th><th>Spelare</th><th>Birdies</th></tr></thead><tbody>${createRows('birdies', 'Birdies')}</tbody></table></div></section><section class="result-block"><div class="section-label">Eagleskungen</div><div class="table-wrap"><table><caption class="sr-only">Ranking efter antal eagles</caption><thead><tr><th>Plats</th><th>Spelare</th><th>Eagles</th></tr></thead><tbody>${createRows('eagles', 'Eagles')}</tbody></table></div></section></div>`;
     }
 
     function showView(viewId) {
@@ -439,13 +532,14 @@
       document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === viewId));
       document.querySelectorAll('[data-view]').forEach(button => button.classList.toggle('active', button.dataset.view === viewId));
       if (viewId === 'history-view') renderHistory();
+      if (viewId === 'leaderboard-view') renderLeaderboard();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => showView(button.dataset.view)));
     document.getElementById('clear-history').addEventListener('click', () => {
       if (!loadHistory().length) return;
-      if (window.confirm('Vill du rensa all historik?')) { localStorage.removeItem(historyKey); renderHistory(); }
+      if (window.confirm('Vill du rensa all historik?')) { localStorage.removeItem(historyKey); renderHistory(); renderLeaderboard(); }
     });
     let lastHistoryTouch = 0;
     function deleteHistoryRound(event) {
@@ -460,9 +554,30 @@
       history.splice(index, 1);
       localStorage.setItem(historyKey, JSON.stringify(history));
       renderHistory();
+      renderLeaderboard();
     }
     document.getElementById('history-content').addEventListener('touchend', deleteHistoryRound, { passive: false });
     document.getElementById('history-content').addEventListener('click', deleteHistoryRound);
+    let lastShareTouch = 0;
+    function shareHistoryRound(event) {
+      const target = event.target;
+      const button = target && typeof target.closest === 'function' ? target.closest('[data-share-round]') : null;
+      if (!button) return;
+      if (event.type === 'touchend') { event.preventDefault(); lastShareTouch = Date.now(); }
+      if (event.type === 'click' && Date.now() - lastShareTouch < 700) return;
+      const index = Number(button.dataset.shareRound);
+      const history = loadHistory();
+      const round = history[index];
+      if (!Number.isInteger(index) || !round) return;
+      const players = round.players.map(player => ({ ...player, birdies: Number(player.birdies) || 0, eagles: Number(player.eagles) || 0 }));
+      const accounts = players.map(player => {
+        const net = Number(player.net) || 0;
+        return { name: player.name, receive: Math.max(net, 0), pay: Math.max(-net, 0), wins: 0 };
+      });
+      shareResultData({ players, accounts, settlement: buildSettlement(accounts), date: new Date(round.date) });
+    }
+    document.getElementById('history-content').addEventListener('touchend', shareHistoryRound, { passive: false });
+    document.getElementById('history-content').addEventListener('click', shareHistoryRound);
 
     function playerTemplate(index, values = {}) {
       const v = (key, fallback = '') => values[key] ?? fallback;
@@ -594,6 +709,66 @@
       return accounts;
     }
 
+    function buildShareCardSvg(result) {
+      const { players, accounts, settlement, date } = result;
+      const dateText = date.toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' });
+      const playerRows = accounts.map((account, index) => {
+        const net = account.receive - account.pay;
+        const color = net >= 0 ? '#087443' : '#b42318';
+        const y = 420 + index * 60;
+        return `<text x="100" y="${y}" fill="#172b4d" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700">${escapeHtml(account.name)}</text><text x="980" y="${y}" text-anchor="end" fill="${color}" font-family="Arial, Helvetica, sans-serif" font-size="32" font-weight="700">${escapeHtml(money(net))}</text>${index < accounts.length - 1 ? `<line x1="100" y1="${y + 24}" x2="980" y2="${y + 24}" stroke="#e3e8ee" stroke-width="2"/>` : ''}`;
+      }).join('');
+      const settlementRows = settlement.length ? settlement.slice(0, 3).map((item, index) => `<circle cx="120" cy="${742 + index * 58}" r="7" fill="#e4002b"/><text x="150" y="${750 + index * 58}" fill="#172b4d" font-family="Arial, Helvetica, sans-serif" font-size="26">${escapeHtml(item.from)} betalar ${escapeHtml(item.to)}</text><text x="980" y="${750 + index * 58}" text-anchor="end" fill="#172b4d" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="700">${formatAmount(item.amount)} kr</text>`).join('') : '<text x="100" y="750" fill="#52657a" font-family="Arial, Helvetica, sans-serif" font-size="26">Alla spelare ligger jämnt.</text>';
+      const winnerFor = key => {
+        const highest = Math.max(...players.map(player => player[key]));
+        return players.filter(player => player[key] === highest && highest > 0).map(player => player.name).join(' & ') || 'Ingen ännu';
+      };
+      const amountFor = (key, value) => `${value} ${key === 'birdies' ? (value === 1 ? 'birdie' : 'birdies') : (value === 1 ? 'eagle' : 'eagles')}`;
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350"><rect width="1080" height="1350" fill="#f4f6f8"/><rect width="1080" height="260" fill="#041e42"/><rect y="252" width="1080" height="8" fill="#e4002b"/><text x="80" y="92" fill="#b9c9dc" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" letter-spacing="4">GOLFKASSA</text><text x="80" y="170" fill="white" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="700">Rundans resultat</text><text x="80" y="218" fill="#d7e1ed" font-family="Arial, Helvetica, sans-serif" font-size="28">${escapeHtml(dateText)}</text><rect x="60" y="310" width="960" height="300" rx="8" fill="white" stroke="#d4dce5" stroke-width="2"/><text x="100" y="365" fill="#123b68" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" letter-spacing="2">SLUTRESULTAT</text>${playerRows}<rect x="60" y="650" width="960" height="240" rx="8" fill="white" stroke="#d4dce5" stroke-width="2"/><text x="100" y="705" fill="#123b68" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" letter-spacing="2">BETALNINGAR</text>${settlementRows}<rect x="60" y="930" width="460" height="250" rx="8" fill="#e8f5ee"/><text x="100" y="990" fill="#087443" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" letter-spacing="1.5">BIRDIEMASKINEN</text><text x="100" y="1065" fill="#172b4d" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="700">${escapeHtml(winnerFor('birdies'))}</text><text x="100" y="1125" fill="#087443" font-family="Arial, Helvetica, sans-serif" font-size="28">${escapeHtml(amountFor('birdies', Math.max(...players.map(player => player.birdies))))}</text><rect x="560" y="930" width="460" height="250" rx="8" fill="#fff4e5"/><text x="600" y="990" fill="#8a4b08" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" letter-spacing="1.5">EAGLESKUNGEN</text><text x="600" y="1065" fill="#172b4d" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="700">${escapeHtml(winnerFor('eagles'))}</text><text x="600" y="1125" fill="#8a4b08" font-family="Arial, Helvetica, sans-serif" font-size="28">${escapeHtml(amountFor('eagles', Math.max(...players.map(player => player.eagles))))}</text><text x="540" y="1270" text-anchor="middle" fill="#52657a" font-family="Arial, Helvetica, sans-serif" font-size="24">Delat från Golfkassa</text></svg>`;
+    }
+
+    function svgToPngBlob(svg) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }));
+        image.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = 1080;
+          canvas.height = 1350;
+          const context = canvas.getContext('2d');
+          context.fillStyle = '#f4f6f8';
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          context.drawImage(image, 0, 0);
+          URL.revokeObjectURL(url);
+          canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Kunde inte skapa bilden.')), 'image/png');
+        };
+        image.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Kunde inte läsa resultatkortet.')); };
+        image.src = url;
+      });
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      const isAppleMobile = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      if ('download' in link && !isAppleMobile) link.click();
+      else window.open(url, '_blank', 'noopener');
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function shareResultData(result) {
+      const filename = `golfkassa-${result.date.toISOString().slice(0, 10)}.svg`;
+      const blob = new Blob([buildShareCardSvg(result)], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const opened = window.open(url, '_blank', 'noopener');
+      if (!opened) downloadBlob(blob, filename);
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    }
+
     function formatAmount(amount) {
       return amount.toLocaleString('sv-SE', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
     }
@@ -631,7 +806,7 @@
       }
       errorSummary.classList.remove('show');
       const accounts = showResults(players, stakes);
-      saveHistory(accounts);
+      saveHistory(accounts, players);
     }
 
     function runReset(event) {
@@ -660,7 +835,6 @@
     bindMobileButton('calculate', runCalculation);
 
     document.getElementById('add-player').addEventListener('click', () => { if (state.players < 4) { const current = readPlayers(); state.players++; renderPlayers(current); } });
-    document.getElementById('load-example').addEventListener('click', () => { state.players = 3; renderPlayers(example); resetStakes(); errorSummary.classList.remove('show'); showResults(example, readStakes()); });
     bindMobileButton('reset', event => { resetStakes(); runReset(event); });
     renderPlayers();
   </script>
