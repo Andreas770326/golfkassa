@@ -364,10 +364,22 @@
     .dashboard-heading button { border: 0; background: transparent; color: var(--success); font-weight: 700; font-size: .8rem; }
     .dashboard-players { display: flex; gap: 22px; }
     .dashboard-players > div { text-align: center; }
+    .dashboard-players b { display: block; margin-top: 5px; font-size: .76rem; }
     .dashboard-avatar { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; background: #d9f1e1; border: 4px solid #12a562; color: #087443; font-weight: 800; font-size: 1.35rem; }
     .dashboard-round { width: 100%; border: 0; background: #e4f8ec; border-radius: 20px; padding: 18px; display: flex; justify-content: space-between; align-items: center; text-align: left; color: var(--ink); }
     .dashboard-round strong { font-size: 1.05rem; }
     .dashboard-round b { color: var(--success); font-size: 1.45rem; }
+    .dashboard-rounds { display: flex; gap: 14px; overflow-x: scroll; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; padding: 2px 4px 14px 1px; scrollbar-width: thin; scrollbar-color: #0aa15b #dcefe3; }
+    .dashboard-rounds::-webkit-scrollbar { height: 8px; }
+    .dashboard-rounds::-webkit-scrollbar-track { background: #dcefe3; border-radius: 99px; }
+    .dashboard-rounds::-webkit-scrollbar-thumb { background: #0aa15b; border-radius: 99px; }
+    .dashboard-rounds .dashboard-round { flex: 0 0 min(78vw, 320px); min-height: 0; padding: 9px 12px; scroll-snap-align: start; box-shadow: 0 5px 14px rgba(7,59,43,.07); }
+    .dashboard-rounds .dashboard-round small + small { margin-top: 2px; }
+    .dashboard-round-empty { flex-basis: 100% !important; }
+    .dashboard-round-info { display: block; width: 100%; }
+    .dashboard-round-result-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px 8px; margin-top: 5px; }
+    .dashboard-round-player { display: flex; justify-content: space-between; gap: 4px; color: var(--ink); font-size: .7rem; line-height: 1.2; white-space: nowrap; }
+    .dashboard-round-player strong { font-size: .7rem; }
     .dashboard-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 24px; }
     .dashboard-actions button { border: 0; border-radius: 18px; background: #f5f8f5; color: var(--ink); padding: 14px 8px; min-height: 82px; }
     .dashboard-actions button:first-child { background: var(--success); color: white; }
@@ -417,6 +429,46 @@
     #register-view .card, #history-view .card, #leaderboard-view .card { border-radius: 26px; }
     #register-view .card-header, #history-view .card-header, #leaderboard-view .card-header { border-bottom: 1px solid var(--line); padding-bottom: 18px; }
     #register-view .card-header h2, #history-view h2, #leaderboard-view h2 { color: var(--ink); }
+    /* Full app shell: no separate image layer and one visual language on every view. */
+    .hero, .hero-inner { display: none; }
+    main { margin-top: 0; padding-top: 24px; }
+    .view.active { animation: appFade .18s ease-out; }
+    @keyframes appFade { from { opacity: .7; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    #register-view .grid, #history-view .grid, #leaderboard-view .grid { display: block; }
+    #register-view .card, #history-view .card, #leaderboard-view .card { background: #fff; border: 0; box-shadow: 0 10px 28px rgba(7,59,43,.08); }
+    #register-view .rules { background: #e4f8ec; }
+    #register-view .player-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    #history-view .history-total { border-radius: 24px; box-shadow: 0 10px 28px rgba(7,59,43,.12); }
+    #history-view .chart-scroll { margin-top: 14px; }
+    #leaderboard-view .result-block { background: #fff; border: 0; box-shadow: 0 10px 28px rgba(7,59,43,.08); }
+    #leaderboard-view .result-block:first-child { border-top: 5px solid #12a562; }
+    #leaderboard-view .result-block:last-child { border-top: 5px solid #f0b84b; }
+    @media (max-width: 560px) { #register-view .player-grid { grid-template-columns: 1fr; } }
+    /* Screenshot-inspired home hero: image is part of the page, not a layer behind a card. */
+    .hero { display: block; min-height: 480px; padding: 0; border-radius: 0; background-position: center 58%; }
+    .hero-inner { display: block; visibility: visible; height: 480px; position: relative; padding: 28px 24px; }
+    .hero .eyebrow { display: none; }
+    .hero-profile { position: absolute; left: 46px; top: 142px; width: 146px; height: 146px; border: 7px solid #ffd21c; border-radius: 50%; background: #dcefe3; color: #07573d; display: grid; place-items: center; font-size: 62px; font-weight: 800; box-shadow: 0 5px 14px rgba(0,0,0,.18); }
+    .hero h1 { display: block; position: absolute; left: 46px; bottom: 42px; margin: 0; color: white; font-size: clamp(2.35rem, 8vw, 4.1rem); font-weight: 400; letter-spacing: -.04em; text-shadow: 0 2px 7px rgba(0,0,0,.35); }
+    .hero h1 strong { font-weight: 800; }
+    .hero p { display: none; }
+    main { margin-top: -22px; padding-top: 0; }
+    .golf-dashboard { border-radius: 30px 30px 0 0; padding-top: 26px; }
+    .dashboard-welcome { display: none; }
+    .dashboard-stats { margin-top: 0; grid-template-columns: 1.25fr .75fr; }
+    .dashboard-stats > div { background: white; box-shadow: 0 8px 24px rgba(7,59,43,.12); border-radius: 24px; min-height: 92px; display: flex; flex-direction: column; justify-content: center; }
+    .dashboard-section h3 { font-size: 1.45rem; }
+    .dashboard-players { overflow: hidden; padding-bottom: 6px; }
+    .dashboard-avatar { width: 82px; height: 82px; border-width: 5px; }
+    @media (max-width: 560px) {
+      .hero { min-height: 390px; }
+      .hero-inner { height: 390px; }
+      .hero-profile { left: 42px; top: 112px; width: 118px; height: 118px; border-width: 6px; font-size: 48px; }
+      .hero h1 { left: 42px; bottom: 34px; font-size: 2.35rem; }
+      .dashboard-avatar { width: 70px; height: 70px; }
+    }
+    .dashboard-avatar-image { overflow: hidden; padding: 0; background: #d9f1e1; }
+    .dashboard-player-avatar { width: 100%; height: 100%; border: 0; border-radius: 50%; object-fit: cover; object-position: 50% 50%; display: block; }
   </style>
 </head>
 <body>
@@ -432,9 +484,9 @@
 
   <section class="hero">
     <div class="hero-inner">
-      <div class="eyebrow">Beräkning av golfspel</div>
-      <h1>Golfkassa</h1>
-      <p>Registrera rundan, se resultatutvecklingen över tid och följ kampen om Birdiemaskinen och Eagleskungen.</p>
+      <div class="eyebrow">Golfkassa</div>
+      <div class="hero-profile">A</div>
+      <h1 id="hero-greeting">Ta i allt du kan,<br><strong>Andreas</strong></h1>
     </div>
   </section>
 
@@ -442,9 +494,9 @@
     <section id="home-view" class="view active" aria-labelledby="home-title">
       <div class="golf-dashboard">
         <div class="dashboard-welcome"><span class="section-label">Golfkassa</span><h2 id="home-title">Mjukare slag,<br><strong>hårdare konkurrens</strong></h2><p>Välkommen tillbaka, Andreas</p></div>
-        <div class="dashboard-stats"><div><strong>+270 kr</strong><span>Senaste resultat</span></div><div><strong>12</strong><span>Rundor totalt</span></div></div>
-        <div class="dashboard-section"><div class="dashboard-heading"><h3>Vänner på banan</h3><button type="button" data-view="register-view">Ny runda</button></div><div class="dashboard-players"><div><span class="dashboard-avatar">A</span><small>Adde</small></div><div><span class="dashboard-avatar">R</span><small>Robban</small></div><div><span class="dashboard-avatar">M</span><small>Matte</small></div></div></div>
-        <div class="dashboard-section"><div class="dashboard-heading"><h3>Senaste rundan</h3><button type="button" data-view="history-view">Visa alla</button></div><button class="dashboard-round" type="button" data-view="history-view"><span><strong>Golfdag</strong><small>Adde · Robban · Matte</small></span><b>+270 kr</b></button></div>
+        <div class="dashboard-stats"><div id="dashboard-latest-result"><strong>—</strong><span>Senaste resultat</span><div class="dashboard-winners">Ingen runda registrerad ännu</div></div><div><strong id="dashboard-round-count">0</strong><span>Rundor totalt</span></div></div>
+        <div class="dashboard-section"><div class="dashboard-heading"><h3>Vänner på banan</h3><button type="button" data-view="register-view">Ny runda</button></div><div id="dashboard-players" class="dashboard-players"><div><span class="dashboard-avatar">A</span><small>Adde</small></div><div><span class="dashboard-avatar">R</span><small>Robban</small></div><div><span class="dashboard-avatar">M</span><small>Matte</small></div></div></div>
+        <div class="dashboard-section"><div class="dashboard-heading"><h3>Senaste rundor</h3><button type="button" data-view="history-view">Visa alla</button></div><div id="dashboard-rounds" class="dashboard-rounds"></div></div>
         <div class="dashboard-actions"><button type="button" data-view="register-view"><strong>＋</strong><span>Registrera runda</span></button><button type="button" data-view="leaderboard-view"><strong>🏆</strong><span>Topplista</span></button><button type="button" data-view="history-view"><strong>◷</strong><span>Historik</span></button></div>
       </div>
     </section>
@@ -594,6 +646,38 @@
       return image ? `<img class="${className}" src="${image}" alt="${escapeHtml(name)}" />` : '';
     }
 
+    function rotateHeroGreeting() {
+      const greeting = document.getElementById('hero-greeting');
+      if (!greeting) return;
+      const greetings = [
+        ['Ta i allt du kan,', 'Andreas'],
+        ['Dags att visa,', 'vem som äger banan'],
+        ['Nya slag.', 'Nya skulder.'],
+        ['Idag spelar vi,', 'för äran och pengarna'],
+        ['Banan väntar på,', 'nästa vinnare'],
+        ['Mjuk start.', 'Hård avslutning.']
+      ];
+      const key = 'golfkassa-greeting-index';
+      const previous = Number(localStorage.getItem(key) || 0);
+      const selected = greetings[Number.isFinite(previous) ? previous % greetings.length : 0];
+      greeting.innerHTML = `${escapeHtml(selected[0])}<br><strong>${escapeHtml(selected[1])}</strong>`;
+      localStorage.setItem(key, String((Number.isFinite(previous) ? previous : 0) + 1));
+    }
+
+    function renderDashboardPlayers() {
+      const target = document.getElementById('dashboard-players');
+      if (!target) return;
+      const totals = {};
+      loadHistory().forEach(round => (round.players || []).forEach(player => {
+        totals[player.name] = (totals[player.name] || 0) + (Number(player.net) || 0);
+      }));
+      target.innerHTML = ['Adde', 'Robban', 'Matte'].map(name => {
+        const total = totals[name] || 0;
+        const status = total > 0 ? 'positive' : total < 0 ? 'negative' : 'zero';
+        return `<div><span class="dashboard-avatar dashboard-avatar-image">${avatarMarkup(name, 'dashboard-player-avatar')}</span><small>${escapeHtml(name)}</small><b class="${status}">${escapeHtml(money(total))}</b></div>`;
+      }).join('');
+    }
+
     function loadHistory() {
       try { return JSON.parse(localStorage.getItem(historyKey) || '[]'); }
       catch (error) { return []; }
@@ -605,6 +689,47 @@
       localStorage.setItem(historyKey, JSON.stringify(history.slice(0, 50)));
       renderHistory();
       renderLeaderboard();
+      renderDashboardPlayers();
+      renderDashboardRounds();
+    }
+
+    function renderDashboardRounds() {
+      const target = document.getElementById('dashboard-rounds');
+      if (!target) return;
+      const history = loadHistory().slice(0, 10);
+      if (!history.length) {
+        target.innerHTML = '<div class="dashboard-round dashboard-round-empty"><span><strong>Inga rundor ännu</strong><small>Registrera din första runda</small></span><b>＋</b></div>';
+        renderDashboardSummary();
+        return;
+      }
+      target.innerHTML = history.map(round => {
+        const date = new Date(round.date).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' });
+        const players = round.players || [];
+        const resultRows = players.map(player => {
+          const net = Number(player.net) || 0;
+          const text = money(net);
+          return `<span class="dashboard-round-player"><span>${escapeHtml(player.name)}</span><strong class="${net > 0 ? 'positive' : net < 0 ? 'negative' : 'zero'}">${escapeHtml(text)}</strong></span>`;
+        }).join('');
+        return `<button class="dashboard-round" type="button" data-view="history-view"><span class="dashboard-round-info"><strong>${escapeHtml(date)}</strong><small>${players.length} spelare</small><span class="dashboard-round-result-list">${resultRows}</span></span></button>`;
+      }).join('');
+      renderDashboardSummary();
+    }
+
+    function renderDashboardSummary() {
+      const target = document.getElementById('dashboard-latest-result');
+      const count = document.getElementById('dashboard-round-count');
+      if (!target || !count) return;
+      const history = loadHistory();
+      count.textContent = history.length;
+      if (!history.length) {
+        target.innerHTML = '<strong>—</strong><span>Senaste resultat</span><div class="dashboard-winners">Ingen runda registrerad ännu</div>';
+        return;
+      }
+      const round = history[0];
+      const players = round.players || [];
+      const bestNet = Math.max(...players.map(player => Number(player.net) || 0));
+      const winners = players.filter(player => (Number(player.net) || 0) === bestNet).map(player => player.name).join(' & ');
+      target.innerHTML = `<strong>${escapeHtml(money(bestNet))}</strong><span>Senaste resultat</span><div class="dashboard-winners"><b>${escapeHtml(winners)}</b> vann</div>`;
     }
 
     function renderHistory() {
@@ -732,7 +857,7 @@
     document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => showView(button.dataset.view)));
     document.getElementById('clear-history').addEventListener('click', () => {
       if (!loadHistory().length) return;
-      if (window.confirm('Vill du rensa all historik?')) { localStorage.removeItem(historyKey); renderHistory(); renderLeaderboard(); }
+      if (window.confirm('Vill du rensa all historik?')) { localStorage.removeItem(historyKey); renderHistory(); renderLeaderboard(); renderDashboardPlayers(); renderDashboardRounds(); }
     });
     let lastHistoryTouch = 0;
     function deleteHistoryRound(event) {
@@ -748,6 +873,8 @@
       localStorage.setItem(historyKey, JSON.stringify(history));
       renderHistory();
       renderLeaderboard();
+      renderDashboardPlayers();
+      renderDashboardRounds();
     }
     document.getElementById('history-content').addEventListener('touchend', deleteHistoryRound, { passive: false });
     document.getElementById('history-content').addEventListener('click', deleteHistoryRound);
@@ -1087,6 +1214,11 @@
 
     document.getElementById('add-player').addEventListener('click', () => { if (state.players < 4) { const current = readPlayers(); state.players++; renderPlayers(current); } });
     bindMobileButton('reset', event => { resetStakes(); runReset(event); });
+    rotateHeroGreeting();
+    renderDashboardPlayers();
+    renderDashboardRounds();
+    renderDashboardSummary();
+    window.addEventListener('load', renderDashboardSummary);
     renderPlayers();
   </script>
 </body>
