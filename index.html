@@ -1184,6 +1184,57 @@
       return `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="${height}" viewBox="0 0 ${W} ${height}" preserveAspectRatio="xMidYMin meet" style="display:block;max-width:100vw;height:auto"><defs><linearGradient id="shareHeaderMobile" x1="0" x2="1"><stop offset="0" stop-color="#064b38"/><stop offset="1" stop-color="#0aa15b"/></linearGradient></defs><rect width="${W}" height="${height}" fill="#f4f7f5"/><rect width="${W}" height="150" fill="url(#shareHeaderMobile)"/><rect y="145" width="${W}" height="5" fill="#ffd21c"/><text x="${margin}" y="38" fill="#bff2d0" font-family="Arial" font-size="11" font-weight="700" letter-spacing="2">GOLFKASSA · RESULTAT</text><text x="${margin}" y="82" fill="white" font-family="Arial" font-size="30" font-weight="700">Rundans resultat</text><text x="${margin}" y="116" fill="#e3f8ea" font-family="Arial" font-size="15">${esc(dateText)}</text>${resultCard}${winnersCard}${paymentsCard}${card(y, verdictH, '#e8f5ee', '#b9e5c9')}${sectionTitle('RUNDANS DOM', y + 34)}${verdictRows}</svg>`;
     }
 
+    function buildShareCardSvgCompact(result) {
+      const { players, accounts, date } = result;
+      const W = 390, H = 780, margin = 18, cardW = W - margin * 2;
+      const dateText = date.toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' });
+      const esc = value => escapeHtml(String(value));
+      const winnerFor = key => {
+        const best = Math.max(...players.map(player => Number(player[key]) || 0));
+        return players.filter(player => (Number(player[key]) || 0) === best && best > 0).map(player => player.name).join(' & ') || 'Ingen ännu';
+      };
+      const wrap = (value, max = 43) => {
+        const lines = []; let line = '';
+        String(value).split(/\s+/).forEach(word => {
+          const next = line ? `${line} ${word}` : word;
+          if (next.length > max && line) { lines.push(line); line = word; } else line = next;
+        });
+        if (line) lines.push(line);
+        return lines;
+      };
+      const card = (y, h, fill = '#fff', stroke = '#dce7e0') => `<rect x="${margin}" y="${y}" width="${cardW}" height="${h}" rx="20" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`;
+      const title = (label, y) => `<text x="${margin + 20}" y="${y}" fill="#087443" font-family="Arial" font-size="13" font-weight="700" letter-spacing="1.1">${label}</text>`;
+
+      const resultY = 134;
+      const resultRows = accounts.map((account, index) => {
+        const net = account.receive - account.pay;
+        const rowY = resultY + 58 + index * 30;
+        const color = net >= 0 ? '#087443' : '#b42318';
+        return `<text x="${margin + 20}" y="${rowY}" fill="#172b4d" font-family="Arial" font-size="16" font-weight="700">${esc(account.name)}</text><text x="${W - margin - 20}" y="${rowY}" text-anchor="end" fill="${color}" font-family="Arial" font-size="17" font-weight="700">${esc(money(net))}</text>`;
+      }).join('');
+      const resultH = 48 + accounts.length * 30;
+
+      const totalWinner = winnerFor('total');
+      const firstWinner = winnerFor('first');
+      const lastWinner = winnerFor('last');
+      const special = players.filter(player => (Number(player.birdies) || 0) + (Number(player.eagles) || 0) > 0).map(player => player.name).join(' & ') || 'Ingen ännu';
+      const winnersY = resultY + resultH + 12;
+      const winnerRows = [
+        ['Totalen', totalWinner],
+        ['Första 9', firstWinner],
+        ['Sista 9', lastWinner],
+        ['Birdie/eagle', special]
+      ].map((item, index) => `<text x="${margin + 20}" y="${winnersY + 53 + index * 27}" fill="#52657a" font-family="Arial" font-size="14">${item[0]}</text><text x="${W - margin - 20}" y="${winnersY + 53 + index * 27}" text-anchor="end" fill="#172b4d" font-family="Arial" font-size="15" font-weight="700">${esc(item[1])}</text>`).join('');
+      const winnersH = 52 + 4 * 27;
+
+      const verdictY = winnersY + winnersH + 12;
+      const verdictLines = wrap(buildCheekySummary(players), 43).slice(0, 5);
+      const verdictRows = verdictLines.map((line, index) => `<text x="${margin + 20}" y="${verdictY + 53 + index * 25}" fill="#172b4d" font-family="Arial" font-size="14">${esc(line)}</text>`).join('');
+      const verdictH = 52 + verdictLines.length * 25;
+
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMin meet" style="display:block;max-width:100vw;height:auto"><defs><linearGradient id="shareHeaderCompact" x1="0" x2="1"><stop offset="0" stop-color="#064b38"/><stop offset="1" stop-color="#0aa15b"/></linearGradient></defs><rect width="${W}" height="${H}" fill="#f4f7f5"/><rect width="${W}" height="112" fill="url(#shareHeaderCompact)"/><rect y="107" width="${W}" height="5" fill="#ffd21c"/><text x="${margin}" y="32" fill="#bff2d0" font-family="Arial" font-size="10" font-weight="700" letter-spacing="1.8">GOLFKASSA · RESULTAT</text><text x="${margin}" y="68" fill="white" font-family="Arial" font-size="28" font-weight="700">Rundans resultat</text><text x="${margin}" y="94" fill="#e3f8ea" font-family="Arial" font-size="13">${esc(dateText)}</text>${card(resultY, resultH)}${title('NETTORESULTAT', resultY + 29)}${resultRows}${card(winnersY, winnersH)}${title('VINNARE', winnersY + 29)}${winnerRows}${card(verdictY, verdictH, '#e8f5ee', '#b9e5c9')}${title('RUNDANS DOM', verdictY + 29)}${verdictRows}<text x="${margin}" y="752" fill="#52657a" font-family="Arial" font-size="11">Golfkassa · senaste rundan</text></svg>`;
+    }
+
     function svgToPngBlob(svg) {
       return new Promise((resolve, reject) => {
         const image = new Image();
@@ -1219,7 +1270,7 @@
 
     function shareResultData(result) {
       const filename = `golfkassa-${result.date.toISOString().slice(0, 10)}.svg`;
-      const blob = new Blob([buildShareCardSvgMobile(result)], { type: 'image/svg+xml;charset=utf-8' });
+      const blob = new Blob([buildShareCardSvgCompact(result)], { type: 'image/svg+xml;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const opened = window.open(url, '_blank', 'noopener');
       if (!opened) downloadBlob(blob, filename);
