@@ -1040,69 +1040,69 @@
         const best = Math.max(...players.map(player => Number(player[key]) || 0));
         return players.filter(player => (Number(player[key]) || 0) === best).map(player => player.name).join(' och ');
       };
-      const roundComment = (segment, key) => players.map(player => {
+      const pick = (items, seed) => items[Math.abs(seed) % items.length];
+      const roundComment = (segment, key) => players.map((player, index) => {
         const points = Number(player[key]) || 0;
-        if (points <= 16) return `${player.name} skrapade ihop ${points} poäng på ${segment} – det där var mindre golf och mer ett offentligt rop på hjälp. Till och med bollen började överväga att byta spelare.`;
-        if (points <= 19) return `${player.name} landade på ${points} poäng på ${segment} – precis lagom för att kalla det golf, men inte så bra att någon behöver bli odräglig efteråt.`;
-        return `${player.name} levererade ${points} poäng på ${segment} – en riktigt stark insats. Nästan så bra att resten borde be om tips, men lugn nu.`;
+        if (points <= 16) return pick([
+          `${player.name} fick ${points} poäng på ${segment} – mer överlevnad än golf.`,
+          `${player.name} landade på ${points} poäng på ${segment} – bollen hade en tuffare dag än vanligt.`,
+          `${player.name} skrapade ihop ${points} poäng på ${segment} – scorekortet ber om en förklaring.`
+        ], index + points);
+        if (points <= 19) return pick([
+          `${player.name} fick ${points} poäng på ${segment} – stabilt, men ingen behöver hålla tal.`,
+          `${player.name} landade på ${points} poäng på ${segment} – godkänt med marginal.`,
+          `${player.name} noterade ${points} poäng på ${segment} – golf nog för att slippa ursäkter.`
+        ], index + points);
+        return pick([
+          `${player.name} levererade ${points} poäng på ${segment} – riktigt starkt spel.`,
+          `${player.name} nådde ${points} poäng på ${segment} – resten får anteckna.`,
+          `${player.name} spelade ihop ${points} poäng på ${segment} – dagens tydliga klassnummer.`
+        ], index + points);
       }).join(' ');
-      const totalComment = players.map(player => {
+      const totalComment = players.map((player, index) => {
         const points = Number(player.total) || 0;
-        if (points < 33) return `${player.name} fick ihop ${points} poäng totalt – ett resultat som borde utredas av både golfklubben och socialtjänsten. Hårda ord är tyvärr det enda rimliga här.`;
-        if (points <= 36) return `${player.name} slutade på ${points} poäng totalt – stabilt nog för att slippa skämmas offentligt, men knappast något som behöver förevigas på en pokal.`;
-        return `${player.name} nådde ${points} poäng totalt – en imponerande uppvisning! Så bra att scorekortet nästan borde ramas in och försäkras.`;
+        if (points <= 32) return pick([
+          `${player.name} fick ${points} poäng totalt – en runda som helst bör stanna i historiken.`,
+          `${player.name} slutade på ${points} poäng totalt – scorekortet behöver mer arbete än klubborna.`,
+          `${player.name} nådde ${points} poäng totalt – dagens golf bjöd på karaktär, inte resultat.`
+        ], index + points);
+        if (points <= 36) return pick([
+          `${player.name} slutade på ${points} poäng totalt – helt okej och lagom svår att skryta om.`,
+          `${player.name} fick ${points} poäng totalt – stabilt, sympatiskt och nästan imponerande.`,
+          `${player.name} landade på ${points} poäng totalt – en fullt försvarbar insats.`
+        ], index + points);
+        return pick([
+          `${player.name} nådde ${points} poäng totalt – en runda värd att prata om.`,
+          `${player.name} fick ${points} poäng totalt – scorekortet förtjänar nästan en ram.`,
+          `${player.name} levererade ${points} poäng totalt – dagens prestation med stort P.`
+        ], index + points);
       }).join(' ');
       const totalWinner = winner('total');
       const firstWinner = winner('first');
       const lastWinner = winner('last');
-      const maxTotal = Math.max(...players.map(player => Number(player.total) || 0));
-      const minTotal = Math.min(...players.map(player => Number(player.total) || 0));
-      const difference = maxTotal - minTotal;
       const specialPlayers = players.filter(player => (Number(player.birdies) || 0) + (Number(player.eagles) || 0) > 0);
-      const specialText = specialPlayers.length ? ` ${specialPlayers.map(player => `${player.name} stod för showen med ${player.birdies || 0} birdies och ${player.eagles || 0} eagles`).join(', ')}.` : ' Ingen lyckades köpa sig fri med en enda birdie eller eagle.';
-      return `${roundComment('första nio', 'first')} ${roundComment('sista nio', 'last')} ${totalComment} ${firstWinner} vann första nio, ${lastWinner} tog sista nio och ${totalWinner} vann totalen. En rundas motsvarighet till kaos med golfskor på.${specialText}`;
+      const specialText = specialPlayers.length ? ` ${specialPlayers.map(player => `${player.name} stod för showen med ${player.birdies || 0} birdies och ${player.eagles || 0} eagles`).join(', ')}.` : ' Ingen lyckades köpa sig fri med en birdie eller eagle.';
+      return `${roundComment('första nio', 'first')} ${roundComment('sista nio', 'last')} ${totalComment} ${firstWinner} vann första nio, ${lastWinner} tog sista nio och ${totalWinner} vann totalen.${specialText}`;
     }
-
-    function buildShareCardSvg(result) {
-      const { players, accounts, settlement, date } = result;
-      const cheekySummary = buildCheekySummary(players);
-      const dateText = date.toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' });
-      const playerRows = accounts.map((account, index) => {
-        const net = account.receive - account.pay;
-        const color = net >= 0 ? '#087443' : '#b42318';
-        const y = 420 + index * 60;
-        const avatar = avatarImages[account.name] ? `<image href="${avatarImages[account.name]}" x="92" y="${y - 28}" width="38" height="38" preserveAspectRatio="xMidYMid slice"/>` : '';
-        return `${avatar}<text x="145" y="${y}" fill="#172b4d" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700">${escapeHtml(account.name)}</text><text x="980" y="${y}" text-anchor="end" fill="${color}" font-family="Arial, Helvetica, sans-serif" font-size="32" font-weight="700">${escapeHtml(money(net))}</text>${index < accounts.length - 1 ? `<line x1="100" y1="${y + 24}" x2="980" y2="${y + 24}" stroke="#e3e8ee" stroke-width="2"/>` : ''}`;
-      }).join('');
-      const settlementRows = settlement.length ? settlement.slice(0, 3).map((item, index) => `<circle cx="120" cy="${742 + index * 58}" r="7" fill="#e4002b"/><text x="150" y="${750 + index * 58}" fill="#172b4d" font-family="Arial, Helvetica, sans-serif" font-size="26">${escapeHtml(item.from)} betalar ${escapeHtml(item.to)}</text><text x="980" y="${750 + index * 58}" text-anchor="end" fill="#172b4d" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="700">${formatAmount(item.amount)} kr</text>`).join('') : '<text x="100" y="750" fill="#52657a" font-family="Arial, Helvetica, sans-serif" font-size="26">Alla spelare ligger jämnt.</text>';
-      const winnerFor = key => {
-        const highest = Math.max(...players.map(player => player[key]));
-        return players.filter(player => player[key] === highest && highest > 0).map(player => player.name).join(' & ') || 'Ingen ännu';
-      };
-      const amountFor = (key, value) => `${value} ${key === 'birdies' ? (value === 1 ? 'birdie' : 'birdies') : (value === 1 ? 'eagle' : 'eagles')}`;
-      return `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350"><rect width="1080" height="1350" fill="#f4f6f8"/><rect width="1080" height="260" fill="#041e42"/><rect y="252" width="1080" height="8" fill="#e4002b"/><text x="80" y="92" fill="#b9c9dc" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" letter-spacing="4">GOLFKASSA</text><text x="80" y="170" fill="white" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="700">Rundans resultat</text><text x="80" y="218" fill="#d7e1ed" font-family="Arial, Helvetica, sans-serif" font-size="28">${escapeHtml(dateText)}</text><rect x="60" y="310" width="960" height="300" rx="8" fill="white" stroke="#d4dce5" stroke-width="2"/><text x="100" y="365" fill="#123b68" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" letter-spacing="2">SLUTRESULTAT</text>${playerRows}<rect x="60" y="650" width="960" height="240" rx="8" fill="white" stroke="#d4dce5" stroke-width="2"/><text x="100" y="705" fill="#123b68" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" letter-spacing="2">BETALNINGAR</text>${settlementRows}<rect x="60" y="930" width="460" height="250" rx="8" fill="#e8f5ee"/><text x="100" y="990" fill="#087443" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" letter-spacing="1.5">BIRDIEMASKINEN</text><text x="100" y="1065" fill="#172b4d" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="700">${escapeHtml(winnerFor('birdies'))}</text><text x="100" y="1125" fill="#087443" font-family="Arial, Helvetica, sans-serif" font-size="28">${escapeHtml(amountFor('birdies', Math.max(...players.map(player => player.birdies))))}</text><rect x="560" y="930" width="460" height="250" rx="8" fill="#fff4e5"/><text x="600" y="990" fill="#8a4b08" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" letter-spacing="1.5">EAGLESKUNGEN</text><text x="600" y="1065" fill="#172b4d" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="700">${escapeHtml(winnerFor('eagles'))}</text><text x="600" y="1125" fill="#8a4b08" font-family="Arial, Helvetica, sans-serif" font-size="28">${escapeHtml(amountFor('eagles', Math.max(...players.map(player => player.eagles))))}</text><rect x="60" y="1210" width="960" height="95" rx="8" fill="#fff" stroke="#d4dce5" stroke-width="2"/><text x="100" y="1250" fill="#52657a" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700">RUNDANS DOM:</text><text x="100" y="1282" fill="#172b4d" font-family="Arial, Helvetica, sans-serif" font-size="20">${escapeHtml(cheekySummary)}</text></svg>`;
-    }
-
-    // Delningskortets summering behöver vara läsbar även på mobil. Den här
-    // versionen använder flera korta rader i stället för en enda lång text.
     function buildShareCardSvg(result) {
       const { players, accounts, settlement, date } = result;
       const dateText = date.toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' });
       const moneyRows = accounts.map((account, index) => {
         const net = account.receive - account.pay;
-        const y = 420 + index * 60;
+        const y = 400 + index * 64;
         const color = net >= 0 ? '#087443' : '#b42318';
-        return `<text x="145" y="${y}" fill="#172b4d" font-family="Arial" font-size="30" font-weight="700">${escapeHtml(account.name)}</text><text x="980" y="${y}" text-anchor="end" fill="${color}" font-family="Arial" font-size="32" font-weight="700">${escapeHtml(money(net))}</text>`;
+        const avatar = avatarImages[account.name] ? `<image href="${avatarImages[account.name]}" x="92" y="${y - 28}" width="42" height="42" preserveAspectRatio="xMidYMid slice"/>` : '';
+        return `${avatar}<text x="150" y="${y}" fill="#172b4d" font-family="Arial" font-size="30" font-weight="700">${escapeHtml(account.name)}</text><text x="980" y="${y}" text-anchor="end" fill="${color}" font-family="Arial" font-size="32" font-weight="700">${escapeHtml(money(net))}</text><line x1="92" y1="${y + 25}" x2="988" y2="${y + 25}" stroke="#e4ebe7" stroke-width="2"/>`;
       }).join('');
-      const settlementRows = settlement.slice(0, 3).map((item, index) => `<text x="100" y="${750 + index * 58}" fill="#172b4d" font-family="Arial" font-size="26">${escapeHtml(item.from)} betalar ${escapeHtml(item.to)} – ${formatAmount(item.amount)} kr</text>`).join('') || '<text x="100" y="750" fill="#52657a" font-family="Arial" font-size="26">Alla spelare ligger jämnt.</text>';
+      const settlementRows = settlement.slice(0, 3).map((item, index) => `<circle cx="120" cy="${735 + index * 58}" r="7" fill="#e4002b"/><text x="150" y="${743 + index * 58}" fill="#172b4d" font-family="Arial" font-size="25">${escapeHtml(item.from)} betalar ${escapeHtml(item.to)}</text><text x="980" y="${743 + index * 58}" text-anchor="end" fill="#172b4d" font-family="Arial" font-size="25" font-weight="700">${formatAmount(item.amount)} kr</text>`).join('') || '<text x="100" y="743" fill="#52657a" font-family="Arial" font-size="25">Alla spelare ligger jämnt.</text>';
       const winnerFor = key => {
         const highest = Math.max(...players.map(player => Number(player[key]) || 0));
         return players.filter(player => (Number(player[key]) || 0) === highest && highest > 0).map(player => player.name).join(' & ') || 'Ingen ännu';
       };
-      const summary = buildCheekySummary(players);
-      const summaryLines = summary.match(/.{1,100}(?:\s+|$)/g) || [summary];
-      const summaryMarkup = summaryLines.slice(0, 9).map((line, index) => `<text x="100" y="${1265 + index * 25}" fill="#172b4d" font-family="Arial" font-size="17">${escapeHtml(line.trim())}</text>`).join('');
-      return `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1510" viewBox="0 0 1080 1510"><rect width="1080" height="1510" fill="#f4f6f8"/><rect width="1080" height="260" fill="#041e42"/><rect y="252" width="1080" height="8" fill="#e4002b"/><text x="80" y="92" fill="#b9c9dc" font-family="Arial" font-size="28" font-weight="700" letter-spacing="4">GOLFKASSA</text><text x="80" y="170" fill="white" font-family="Arial" font-size="58" font-weight="700">Rundans resultat</text><text x="80" y="218" fill="#d7e1ed" font-family="Arial" font-size="28">${escapeHtml(dateText)}</text><rect x="60" y="310" width="960" height="300" rx="8" fill="white"/><text x="100" y="365" fill="#123b68" font-family="Arial" font-size="22" font-weight="700">SLUTRESULTAT</text>${moneyRows}<rect x="60" y="650" width="960" height="240" rx="8" fill="white"/><text x="100" y="705" fill="#123b68" font-family="Arial" font-size="22" font-weight="700">BETALNINGAR</text>${settlementRows}<rect x="60" y="930" width="460" height="250" rx="8" fill="#e8f5ee"/><text x="100" y="990" fill="#087443" font-family="Arial" font-size="22" font-weight="700">BIRDIEMASKINEN</text><text x="100" y="1065" fill="#172b4d" font-family="Arial" font-size="38" font-weight="700">${escapeHtml(winnerFor('birdies'))}</text><rect x="560" y="930" width="460" height="250" rx="8" fill="#fff4e5"/><text x="600" y="990" fill="#8a4b08" font-family="Arial" font-size="22" font-weight="700">EAGLESKUNGEN</text><text x="600" y="1065" fill="#172b4d" font-family="Arial" font-size="38" font-weight="700">${escapeHtml(winnerFor('eagles'))}</text><rect x="60" y="1210" width="960" height="260" rx="8" fill="white"/><text x="100" y="1250" fill="#52657a" font-family="Arial" font-size="20" font-weight="700">RUNDANS DOM</text>${summaryMarkup}</svg>`;
+      const summaryLines = buildCheekySummary(players).match(/.{1,82}(?:\s+|$)/g) || ['Ingen dom kunde skrivas.'];
+      const summaryMarkup = summaryLines.slice(0, 8).map((line, index) => `<text x="100" y="${1320 + index * 27}" fill="#172b4d" font-family="Arial" font-size="20">${escapeHtml(line.trim())}</text>`).join('');
+      const card = (x, y, width, height, fill, stroke = '#dce7e0') => `<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="28" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1580" viewBox="0 0 1080 1580"><defs><linearGradient id="header" x1="0" x2="1"><stop offset="0" stop-color="#064b38"/><stop offset="1" stop-color="#0aa15b"/></linearGradient></defs><rect width="1080" height="1580" fill="#f4f7f5"/><rect width="1080" height="280" fill="url(#header)"/><rect y="272" width="1080" height="8" fill="#ffd21c"/><text x="80" y="76" fill="#bff2d0" font-family="Arial" font-size="24" font-weight="700" letter-spacing="4">GOLFKASSA · RESULTAT</text><text x="80" y="150" fill="white" font-family="Arial" font-size="58" font-weight="700">Rundans resultat</text><text x="80" y="210" fill="#e3f8ea" font-family="Arial" font-size="28">${escapeHtml(dateText)}</text>${card(60, 330, 960, 300, '#ffffff')}<text x="100" y="385" fill="#087443" font-family="Arial" font-size="22" font-weight="700" letter-spacing="2">SLUTRESULTAT</text>${moneyRows}${card(60, 660, 960, 235, '#ffffff')}<text x="100" y="715" fill="#087443" font-family="Arial" font-size="22" font-weight="700" letter-spacing="2">BETALNINGAR</text>${settlementRows}${card(60, 925, 465, 235, '#e8f5ee', '#b9e5c9')}${card(555, 925, 465, 235, '#fff4e5', '#f3d39d')}<text x="100" y="980" fill="#087443" font-family="Arial" font-size="21" font-weight="700">BIRDIEMASKINEN</text><text x="100" y="1045" fill="#172b4d" font-family="Arial" font-size="34" font-weight="700">${escapeHtml(winnerFor('birdies'))}</text><text x="100" y="1095" fill="#087443" font-family="Arial" font-size="24">${Math.max(...players.map(player => Number(player.birdies) || 0))} birdies</text><text x="595" y="980" fill="#8a4b08" font-family="Arial" font-size="21" font-weight="700">EAGLESKUNGEN</text><text x="595" y="1045" fill="#172b4d" font-family="Arial" font-size="34" font-weight="700">${escapeHtml(winnerFor('eagles'))}</text><text x="595" y="1095" fill="#8a4b08" font-family="Arial" font-size="24">${Math.max(...players.map(player => Number(player.eagles) || 0))} eagles</text>${card(60, 1190, 960, 330, '#ffffff')}<text x="100" y="1250" fill="#087443" font-family="Arial" font-size="22" font-weight="700" letter-spacing="2">RUNDANS DOM</text>${summaryMarkup}</svg>`;
     }
 
     function svgToPngBlob(svg) {
