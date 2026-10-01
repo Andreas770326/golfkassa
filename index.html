@@ -1100,6 +1100,38 @@
       return `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1580" viewBox="0 0 1080 1580"><defs><linearGradient id="header" x1="0" x2="1"><stop offset="0" stop-color="#064b38"/><stop offset="1" stop-color="#0aa15b"/></linearGradient></defs><rect width="1080" height="1580" fill="#f4f7f5"/><rect width="1080" height="280" fill="url(#header)"/><rect y="272" width="1080" height="8" fill="#ffd21c"/><text x="80" y="76" fill="#bff2d0" font-family="Arial" font-size="24" font-weight="700" letter-spacing="4">GOLFKASSA · RESULTAT</text><text x="80" y="150" fill="white" font-family="Arial" font-size="58" font-weight="700">Rundans resultat</text><text x="80" y="210" fill="#e3f8ea" font-family="Arial" font-size="28">${escapeHtml(dateText)}</text>${card(60, 330, 960, 300, '#ffffff')}<text x="100" y="385" fill="#087443" font-family="Arial" font-size="22" font-weight="700" letter-spacing="2">SLUTRESULTAT</text>${moneyRows}${card(60, 660, 960, 235, '#ffffff')}<text x="100" y="715" fill="#087443" font-family="Arial" font-size="22" font-weight="700" letter-spacing="2">BETALNINGAR</text>${settlementRows}${card(60, 925, 465, 235, '#e8f5ee', '#b9e5c9')}${card(555, 925, 465, 235, '#fff4e5', '#f3d39d')}<text x="100" y="980" fill="#087443" font-family="Arial" font-size="21" font-weight="700">BIRDIEMASKINEN</text><text x="100" y="1045" fill="#172b4d" font-family="Arial" font-size="34" font-weight="700">${escapeHtml(winnerFor('birdies'))}</text><text x="100" y="1095" fill="#087443" font-family="Arial" font-size="24">${Math.max(...players.map(player => Number(player.birdies) || 0))} birdies</text><text x="595" y="980" fill="#8a4b08" font-family="Arial" font-size="21" font-weight="700">EAGLESKUNGEN</text><text x="595" y="1045" fill="#172b4d" font-family="Arial" font-size="34" font-weight="700">${escapeHtml(winnerFor('eagles'))}</text><text x="595" y="1095" fill="#8a4b08" font-family="Arial" font-size="24">${Math.max(...players.map(player => Number(player.eagles) || 0))} eagles</text>${card(60, 1190, 960, 330, '#ffffff')}<text x="100" y="1250" fill="#087443" font-family="Arial" font-size="22" font-weight="700" letter-spacing="2">RUNDANS DOM</text>${summaryMarkup}</svg>`;
     }
 
+    function buildShareCardSvgV2(result) {
+      const { players, accounts, settlement, date } = result;
+      const dateText = date.toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' });
+      const winnerFor = key => {
+        const best = Math.max(...players.map(player => Number(player[key]) || 0));
+        return players.filter(player => (Number(player[key]) || 0) === best && best > 0).map(player => player.name).join(' & ') || 'Ingen ännu';
+      };
+      const card = (x, y, w, h, fill = '#fff', stroke = '#dce7e0') => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="28" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+      const resultY = 330;
+      const resultH = 110 + accounts.length * 66;
+      const moneyRows = accounts.map((account, index) => {
+        const net = account.receive - account.pay;
+        const y = resultY + 92 + index * 66;
+        const color = net >= 0 ? '#087443' : '#b42318';
+        return `<text x="100" y="${y}" fill="#172b4d" font-family="Arial" font-size="29" font-weight="700">${escapeHtml(account.name)}</text><text x="980" y="${y}" text-anchor="end" fill="${color}" font-family="Arial" font-size="31" font-weight="700">${escapeHtml(money(net))}</text>`;
+      }).join('');
+      const winnersY = resultY + resultH + 24;
+      const winnerItems = [['Första 9', winnerFor('first')], ['Sista 9', winnerFor('last')], ['Totalt', winnerFor('total')], ['Birdies', winnerFor('birdies')], ['Eagles', winnerFor('eagles')]];
+      const winnersH = 100 + winnerItems.length * 46;
+      const winnerRows = winnerItems.map((item, index) => `<text x="100" y="${winnersY + 92 + index * 46}" fill="#52657a" font-family="Arial" font-size="23">${item[0]}</text><text x="980" y="${winnersY + 92 + index * 46}" text-anchor="end" fill="#172b4d" font-family="Arial" font-size="25" font-weight="700">${escapeHtml(item[1])}</text>`).join('');
+      const paymentsY = winnersY + winnersH + 24;
+      const paymentCount = Math.max(1, Math.min(3, settlement.length));
+      const paymentsH = 100 + paymentCount * 48;
+      const paymentRows = settlement.slice(0, 3).map((item, index) => `<text x="100" y="${paymentsY + 90 + index * 48}" fill="#172b4d" font-family="Arial" font-size="23">${escapeHtml(item.from)} betalar ${escapeHtml(item.to)}</text><text x="980" y="${paymentsY + 90 + index * 48}" text-anchor="end" fill="#b42318" font-family="Arial" font-size="23" font-weight="700">${formatAmount(item.amount)} kr</text>`).join('') || `<text x="100" y="${paymentsY + 90}" fill="#52657a" font-family="Arial" font-size="23">Alla spelare ligger jämnt.</text>`;
+      const verdictY = paymentsY + paymentsH + 24;
+      const verdictLines = (buildCheekySummary(players).match(/.{1,76}(?:\s+|$)/g) || ['Ingen dom kunde skrivas.']).slice(0, 7);
+      const verdictH = 100 + verdictLines.length * 29;
+      const verdictRows = verdictLines.map((line, index) => `<text x="100" y="${verdictY + 90 + index * 29}" fill="#172b4d" font-family="Arial" font-size="21">${escapeHtml(line.trim())}</text>`).join('');
+      const height = verdictY + verdictH + 50;
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="${height}" viewBox="0 0 1080 ${height}"><defs><linearGradient id="shareHeader" x1="0" x2="1"><stop offset="0" stop-color="#064b38"/><stop offset="1" stop-color="#0aa15b"/></linearGradient></defs><rect width="1080" height="${height}" fill="#f4f7f5"/><rect width="1080" height="280" fill="url(#shareHeader)"/><rect y="272" width="1080" height="8" fill="#ffd21c"/><text x="80" y="76" fill="#bff2d0" font-family="Arial" font-size="24" font-weight="700" letter-spacing="4">GOLFKASSA · RESULTAT</text><text x="80" y="150" fill="white" font-family="Arial" font-size="58" font-weight="700">Rundans resultat</text><text x="80" y="210" fill="#e3f8ea" font-family="Arial" font-size="28">${escapeHtml(dateText)}</text>${card(60, resultY, 960, resultH)}<text x="100" y="${resultY + 55}" fill="#087443" font-family="Arial" font-size="22" font-weight="700" letter-spacing="2">NETTORESULTAT</text>${moneyRows}${card(60, winnersY, 960, winnersH)}<text x="100" y="${winnersY + 55}" fill="#087443" font-family="Arial" font-size="22" font-weight="700" letter-spacing="2">VEM VANN VAD</text>${winnerRows}${card(60, paymentsY, 960, paymentsH)}<text x="100" y="${paymentsY + 55}" fill="#087443" font-family="Arial" font-size="22" font-weight="700" letter-spacing="2">VINSTFÖRDELNING</text>${paymentRows}${card(60, verdictY, 960, verdictH, '#e8f5ee', '#b9e5c9')}<text x="100" y="${verdictY + 55}" fill="#087443" font-family="Arial" font-size="22" font-weight="700" letter-spacing="2">RUNDANS DOM</text>${verdictRows}</svg>`;
+    }
+
     function svgToPngBlob(svg) {
       return new Promise((resolve, reject) => {
         const image = new Image();
@@ -1135,7 +1167,7 @@
 
     function shareResultData(result) {
       const filename = `golfkassa-${result.date.toISOString().slice(0, 10)}.svg`;
-      const blob = new Blob([buildShareCardSvg(result)], { type: 'image/svg+xml;charset=utf-8' });
+      const blob = new Blob([buildShareCardSvgV2(result)], { type: 'image/svg+xml;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const opened = window.open(url, '_blank', 'noopener');
       if (!opened) downloadBlob(blob, filename);
