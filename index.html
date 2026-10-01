@@ -1041,33 +1041,6 @@
         return players.filter(player => (Number(player[key]) || 0) === best).map(player => player.name).join(' och ');
       };
       const pick = items => items[Math.floor(Math.random() * items.length)];
-      const roundComment = (segment, key) => players.map(player => {
-        const points = Number(player[key]) || 0;
-        if (points <= 16) return pick([
-          `${player.name} fick ${points} poäng på ${segment} – mer överlevnad än golf.`,
-          `${player.name} landade på ${points} poäng på ${segment} – bollen hade en tuffare dag än vanligt.`,
-          `${player.name} skrapade ihop ${points} poäng på ${segment} – scorekortet ber om en förklaring.`,
-          `${player.name} fick ${points} poäng på ${segment} – klubborna vill ha ett krismöte.`,
-          `${player.name} noterade ${points} poäng på ${segment} – dagens boll letar fortfarande efter sin ägare.`,
-          `${player.name} slutade på ${points} poäng på ${segment} – mer dramatik än birdies.`
-        ]);
-        if (points <= 19) return pick([
-          `${player.name} fick ${points} poäng på ${segment} – stabilt, men ingen behöver hålla tal.`,
-          `${player.name} landade på ${points} poäng på ${segment} – godkänt med marginal.`,
-          `${player.name} noterade ${points} poäng på ${segment} – golf nog för att slippa ursäkter.`,
-          `${player.name} spelade ihop ${points} poäng på ${segment} – helt okej med lite tur och bra minne.`,
-          `${player.name} fick ${points} poäng på ${segment} – en insats som klarar dagens granskning.`,
-          `${player.name} nådde ${points} poäng på ${segment} – varken hjälte eller katastrof.`
-        ]);
-        return pick([
-          `${player.name} levererade ${points} poäng på ${segment} – riktigt starkt spel.`,
-          `${player.name} nådde ${points} poäng på ${segment} – resten får anteckna.`,
-          `${player.name} spelade ihop ${points} poäng på ${segment} – dagens tydliga klassnummer.`,
-          `${player.name} fick ${points} poäng på ${segment} – där satt spelet.`,
-          `${player.name} visade ${points} poäng på ${segment} – det här var betydligt mer än tur.`,
-          `${player.name} stod för ${points} poäng på ${segment} – resten av gruppen fick något att jaga.`
-        ]);
-      }).join(' ');
       const totalComment = players.map(player => {
         const points = Number(player.total) || 0;
         if (points <= 32) return pick([
@@ -1096,16 +1069,15 @@
         ]);
       }).join(' ');
       const totalWinner = winner('total');
-      const firstWinner = winner('first');
-      const lastWinner = winner('last');
       const specialPlayers = players.filter(player => (Number(player.birdies) || 0) + (Number(player.eagles) || 0) > 0);
       const specialText = specialPlayers.length ? ` ${pick(['Extra applåd till', 'Dagens show stod', 'Bonuspoängen går till', 'Och som grädde på moset:'])} ${specialPlayers.map(player => `${player.name} med ${player.birdies || 0} birdies och ${player.eagles || 0} eagles`).join(', ')}.` : ` ${pick(['Ingen lyckades köpa sig fri med en birdie eller eagle.', 'Birdie- och eaglekontot förblev orört.', 'Idag fick resultatet klara sig utan specialeffekter.'])}`;
       const conclusion = pick([
-        `${firstWinner} vann första nio, ${lastWinner} tog sista nio och ${totalWinner} vann totalen.`,
-        `Första nio gick till ${firstWinner}, sista nio till ${lastWinner} och totalen till ${totalWinner}.`,
-        `${firstWinner} öppnade bäst, ${lastWinner} avslutade starkast och ${totalWinner} tog hem helheten.`
+        `${totalWinner} tog hem totalen och stod för dagens starkaste helhetsinsats.`,
+        `${totalWinner} vann totalen efter en runda som höll ihop bäst när allt räknades samman.`,
+        `När scorekortet summerades var det ${totalWinner} som hade mest anledning att le.`,
+        `${totalWinner} drog det längsta strået och lämnar banan som dagens totalsegrare.`
       ]);
-      return `${roundComment('första nio', 'first')} ${roundComment('sista nio', 'last')} ${totalComment} ${conclusion}${specialText}`;
+      return `${totalComment} ${conclusion}${specialText}`;
     }
     function buildShareCardSvg(result) {
       const { players, accounts, settlement, date } = result;
