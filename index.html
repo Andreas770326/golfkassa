@@ -220,6 +220,7 @@
     .scorecard-status { color: var(--muted); font-size: .86rem; margin-top: 10px; }
     .scorecard-text { display: none; width: 100%; min-height: 90px; margin-top: 10px; border: 1px solid var(--line); border-radius: 10px; padding: 10px; font-size: .82rem; background: white; }
     .scorecard-text.show { display: block; }
+    #apply-scorecard { display: inline-flex; margin-top: 10px; }
 
     @media (max-width: 800px) {
       .grid { grid-template-columns: 1fr; }
@@ -554,6 +555,7 @@
           <div id="scorecard-previews" class="scorecard-previews" aria-live="polite"></div>
           <div id="scorecard-status" class="scorecard-status" role="status"></div>
           <textarea id="scorecard-text" class="scorecard-text" aria-label="Text som lästes från scorekortet" readonly></textarea>
+          <button class="btn btn-primary" type="button" id="apply-scorecard">Fyll i formuläret</button>
         </div>
 
         <form id="golf-form" novalidate>
@@ -687,6 +689,9 @@
     const scorecardStatus = document.getElementById('scorecard-status');
     const scorecardText = document.getElementById('scorecard-text');
     const analyzeScorecardButton = document.getElementById('analyze-scorecard');
+    const applyScorecardButton = document.getElementById('apply-scorecard');
+    let detectedScorecardPlayers = [];
+    let detectedScorecardColors = {};
     const authForm = document.getElementById('auth-form');
     const authEmail = document.getElementById('auth-email');
     const authPassword = document.getElementById('auth-password');
@@ -713,17 +718,104 @@
       scorecardStatus.textContent = files.length ? `${Math.min(files.length, 4)} bild${files.length === 1 ? '' : 'er'} valda.` : '';
     }
 
+    function normalizeScorecardName(name) {
+      const normalized = name.toLowerCase().replace(/[.,]/g, '').replace(/\s+/g, ' ').trim();
+      const aliases = {
+        'andreas davidsson': 'Adde',
+        'mattias karlsson': 'Matte',
+        'robert carlsson': 'Robban'
+      };
+      return aliases[normalized] || name;
+    }
+
     function extractScorecardPlayers(text) {
       const lines = text.split(/\n+/).map(line => line.replace(/\s+/g, ' ').trim()).filter(Boolean);
       const players = [];
+      const pointHalves = [];
+      lines.filter(line => /poäng|poang/i.test(line)).forEach(line => {
+        const values = (line.match(/\b\d{1,2}\b/g) || []).map(Number).filter(value => value <= 9).slice(0, 9);
+        if (values.length === 9) pointHalves.push(values.reduce((sum, value) => sum + value, 0));
+      });
       lines.forEach(line => {
         const match = line.match(/^(.{3,36}?)\s+(?:HCP\s*)?([+\-]?\d{1,2}(?:[.,]\d)?)\s+(\d{1,3})\s+([+\-]\d{1,3})\s+F\b/i);
         if (!match) return;
         const name = match[1].replace(/^(?:\d+\.?\s*)/, '').trim();
         if (!name || /^(namn|resultat|spelare|position)$/i.test(name)) return;
-        players.push({ name, total: Number(match[3]), toPar: match[4] });
+        players.push({ name: normalizeScorecardName(name), total: Number(match[3]), toPar: match[4] });
       });
-      return players.filter((player, index, list) => list.findIndex(item => item.name.toLowerCase() === player.name.toLowerCase()) === index).slice(0, 4);
+      const knownPlayers = [
+        { fullName: 'Andreas Davidsson', alias: 'Adde', tokens: ['andreas', 'davidsson'] },
+        { fullName: 'Mattias Karlsson', alias: 'Matte', tokens: ['mattias', 'karlsson'] },
+        { fullName: 'Robert Carlsson', alias: 'Robban', tokens: ['robert', 'carlsson'] }
+      ];
+      knownPlayers.forEach(player => {
+        const nameIndex = lines.findIndex(line => {
+          const lower = line.toLowerCase();
+          return lower.includes(player.tokens[0]);
+        });
+        if (nameIndex < 0) return;
+        const nextNameIndex = lines.findIndex((line, index) => index > nameIndex && knownPlayers.some(other => other !== player && line.toLowerCase().includes(other.tokens[0])));
+        const block = lines.slice(nameIndex, nextNameIndex > nameIndex ? nextNameIndex : nameIndex + 30).join(' ');
+        const result = block.match(/(?:^|\s)(?:\d{1,3}\.\s+)?(\d{1,3})\s+[+\-]\d{1,3}\s+=*F\b/i);
+        const fallbackTotal = block.match(/(?:HCP\s*[+\-]?\d{1,2}(?:[.,]\d)?\s+|\b\d{1,3}\.\s+)(\d{1,3})\b/i);
+        const summary = block.split(/\b(?:hål|hal|hole)\b/i)[0];
+        const summaryNumbers = (summary.match(/\b\d{2,3}\b/g) || []).map(Number).filter(value => value >= 10 && value <= 100);
+        if (result) players.push({ name: player.alias, total: Number(result[1]) });
+        else if (fallbackTotal) players.push({ name: player.alias, total: Number(fallbackTotal[1]) });
+        else if (summaryNumbers.length) players.push({ name: player.alias, total: summaryNumbers[summaryNumbers.length - 1] });
+      });
+      return players.filter((player, index, list) => list.findIndex(item => item.name.toLowerCase() === player.name.toLowerCase()) === index).slice(0, 4).map((player, index) => {
+        const first = pointHalves[index * 2];
+        const last = pointHalves[index * 2 + 1];
+        return {
+          ...player,
+          first,
+          last,
+          calculatedTotal: Number.isFinite(first) && Number.isFinite(last) ? first + last : null,
+          totalMatchesHalves: Number.isFinite(first) && Number.isFinite(last) ? first + last === player.total : null
+        };
+      });
+    }
+
+    async function detectColoredScores(file, ocrData) {
+      if (!window.createImageBitmap || !ocrData?.words?.length) return {};
+      const image = await createImageBitmap(file);
+      const canvas = document.createElement('canvas');
+      canvas.width = image.width;
+      canvas.height = image.height;
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      if (!context) return {};
+      context.drawImage(image, 0, 0);
+      image.close();
+      const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      const words = ocrData.words.filter(word => word.text && word.bbox);
+      const names = ['Andreas Davidsson', 'Mattias Karlsson', 'Robert Carlsson'];
+      const bands = names.map(fullName => {
+        const parts = fullName.toLowerCase().split(' ');
+        const word = words.find(item => item.text.toLowerCase().includes(parts[0]) || item.text.toLowerCase().includes(parts[1]));
+        return word ? { name: normalizeScorecardName(fullName), y: word.bbox.y0 } : null;
+      }).filter(Boolean).sort((a, b) => a.y - b.y);
+      const counts = {};
+      words.filter(word => /^\d{1,2}$/.test(word.text.trim())).forEach(word => {
+        const band = bands.slice().reverse().find(item => item.y <= word.bbox.y0);
+        if (!band) return;
+        let red = 0;
+        let yellow = 0;
+        for (let y = Math.max(0, word.bbox.y0); y < Math.min(canvas.height, word.bbox.y1); y += 2) {
+          for (let x = Math.max(0, word.bbox.x0); x < Math.min(canvas.width, word.bbox.x1); x += 2) {
+            const offset = (y * canvas.width + x) * 4;
+            const r = pixels[offset];
+            const g = pixels[offset + 1];
+            const b = pixels[offset + 2];
+            if (r > 170 && g < 115 && b < 125) red += 1;
+            if (r > 170 && g > 130 && b < 105) yellow += 1;
+          }
+        }
+        counts[band.name] ||= { birdies: 0, eagles: 0 };
+        if (red >= 3) counts[band.name].birdies += 1;
+        if (yellow >= 3) counts[band.name].eagles += 1;
+      });
+      return counts;
     }
 
     function applyScorecardPlayers(players) {
@@ -732,11 +824,22 @@
       renderPlayers();
       players.forEach((player, index) => {
         const name = document.querySelector(`[data-field="name"][data-index="${index}"]`);
+        const first = document.querySelector(`[data-field="first"][data-index="${index}"]`);
+        const last = document.querySelector(`[data-field="last"][data-index="${index}"]`);
         const total = document.querySelector(`[data-field="total"][data-index="${index}"]`);
         if (name) name.value = player.name;
-        if (total) total.value = player.total;
+        if (first && Number.isFinite(player.first)) first.value = player.first;
+        if (last && Number.isFinite(player.last)) last.value = player.last;
+        if (total) total.value = Number.isFinite(player.calculatedTotal) ? player.calculatedTotal : player.total;
+        const birdies = document.querySelector(`[data-field="birdies"][data-index="${index}"]`);
+        const eagles = document.querySelector(`[data-field="eagles"][data-index="${index}"]`);
+        if (birdies && Number.isFinite(player.birdies)) birdies.value = player.birdies;
+        if (eagles && Number.isFinite(player.eagles)) eagles.value = player.eagles;
       });
-      scorecardStatus.textContent = `${players.length} spelare hittades. Kontrollera första 9, sista 9, birdies och eagles innan du beräknar.`;
+      const checks = players.filter(player => player.totalMatchesHalves === false);
+      scorecardStatus.textContent = checks.length
+        ? `${players.length} spelare hittades, men ${checks.length} totalsumma${checks.length === 1 ? '' : 'or'} stämmer inte med Första 9 + Sista 9. Kontrollera värdena innan du sparar.`
+        : `${players.length} spelare hittades. Kontrollera första 9, sista 9, birdies och eagles innan du beräknar.`;
     }
 
     async function analyzeScorecardImages() {
@@ -747,19 +850,35 @@
       scorecardText.classList.add('show');
       scorecardText.value = '';
       const texts = [];
+      detectedScorecardColors = {};
       try {
         for (let index = 0; index < files.length; index += 1) {
           scorecardStatus.textContent = `Analyserar bild ${index + 1} av ${files.length}…`;
-          const result = await Tesseract.recognize(files[index], 'eng', { logger: message => {
-            if (message.status === 'recognizing text' && message.progress) scorecardStatus.textContent = `Analyserar bild ${index + 1} av ${files.length}… ${Math.round(message.progress * 100)} %`;
-          }});
+          const result = await Tesseract.recognize(files[index], 'eng', {
+            logger: message => {
+              if (message.status === 'recognizing text' && message.progress) scorecardStatus.textContent = `Analyserar bild ${index + 1} av ${files.length}… ${Math.round(message.progress * 100)} %`;
+            },
+            config: { tessedit_pageseg_mode: '6' }
+          });
           texts.push(result.data.text || '');
+          const colors = await detectColoredScores(files[index], result.data);
+          Object.entries(colors).forEach(([name, counts]) => {
+            detectedScorecardColors[name] ||= { birdies: 0, eagles: 0 };
+            detectedScorecardColors[name].birdies = Math.max(detectedScorecardColors[name].birdies, counts.birdies);
+            detectedScorecardColors[name].eagles = Math.max(detectedScorecardColors[name].eagles, counts.eagles);
+          });
         }
         const combinedText = texts.join('\n');
         scorecardText.value = combinedText;
-        const players = extractScorecardPlayers(combinedText);
-        applyScorecardPlayers(players);
-        if (!players.length) scorecardStatus.textContent = 'Bilderna är inlästa, men spelarna kunde inte identifieras säkert. Kontrollera texten och fyll i formuläret manuellt.';
+        detectedScorecardPlayers = extractScorecardPlayers(combinedText).map(player => ({
+          ...player,
+          birdies: detectedScorecardColors[player.name]?.birdies || 0,
+          eagles: detectedScorecardColors[player.name]?.eagles || 0
+        }));
+        applyScorecardButton.classList.toggle('show', detectedScorecardPlayers.length > 0);
+        if (detectedScorecardPlayers.length) {
+          scorecardStatus.textContent = `${detectedScorecardPlayers.length} spelare hittades. Tryck på ”Fyll i formuläret” för att föra över resultatet.`;
+        } else scorecardStatus.textContent = 'Bilderna är inlästa, men spelarna kunde inte identifieras säkert. Kontrollera texten och fyll i formuläret manuellt.';
       } catch (error) {
         console.error(error);
         scorecardStatus.textContent = 'Det gick inte att analysera bilderna. Fyll i rundan manuellt.';
@@ -767,6 +886,15 @@
         analyzeScorecardButton.disabled = false;
       }
     }
+
+    applyScorecardButton.addEventListener('click', () => {
+      if (!detectedScorecardPlayers.length) {
+        scorecardStatus.textContent = 'Inga säkra spelare hittades ännu. Kör ”Analysera bilder” först eller fyll i formuläret manuellt.';
+        return;
+      }
+      applyScorecardPlayers(detectedScorecardPlayers);
+      document.getElementById('golf-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
 
     scorecardImages.addEventListener('change', () => {
       if (scorecardImages.files.length > 4) {
